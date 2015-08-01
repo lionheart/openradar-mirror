@@ -33,3 +33,5 @@ dj-database-url
 
 gunicorn==18.0
 gevent
+
+requests
