@@ -222,6 +222,8 @@ COMMIT_SHA = ""
 
 settings_path = lambda env: os.path.join(BASE, 'conf', 'settings', '{}.py'.format(env))
 
+GITHUB_API_KEY = os.environ.get("GITHUB_API_KEY")
+
 try:
     config = imp.load_source('local_settings', settings_path(os.environ['APP_ENVIRONMENT']))
     from local_settings import *
