@@ -1,0 +1,12 @@
+/var/log/nginx/*.log
+/var/log/nginx/*.err
+{
+    create 640 ubuntu ubuntu
+    sharedscripts
+    olddir /var/log/rotated
+
+    postrotate
+        [ ! -f /var/run/nginx.pid ] || kill -USR1 `cat /var/run/nginx.pid`
+    endscript
+}
+

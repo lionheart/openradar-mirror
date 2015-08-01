@@ -1,0 +1,5 @@
+/var/log/postgresql/*.log {
+    olddir /var/log/rotated
+    copytruncate
+}
+

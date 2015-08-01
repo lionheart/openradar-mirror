@@ -1,0 +1,5 @@
+/var/log/celery.*.log {
+    create 640 ubuntu ubuntu
+    olddir /var/log/rotated
+}
+

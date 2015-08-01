@@ -1,0 +1,9 @@
+*.db
+*.pyc
+*.un~
+.DS_Store
+.sass-cache/
+venv/
+local_settings.py
+.Python
+pip-selfcheck.json

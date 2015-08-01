@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}
+
+{% load admin_static %}
+{% load app %}
+
+{% block branding %}
+<h1 id="site-name">{{ project_name }} Administration</h1>
+{% endblock %}
+
+{% block extrahead %}
+<script type="text/javascript">window.__admin_media_prefix__ = "{% filter truncate_query_parameters %}{% static "admin/" %}{% endfilter %}";</script>
+{% endblock %}
+
+
