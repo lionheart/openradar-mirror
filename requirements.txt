@@ -34,4 +34,5 @@ dj-database-url
 gunicorn==18.0
 gevent
 
-requests
+requests==2.2.1
+python-dateutil==2.4.2
