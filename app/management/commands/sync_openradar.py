@@ -154,11 +154,11 @@ class Command(BaseCommand):
                                     print u"Added {}".format(title)
                                     if entry_modified < last_modified_min:
                                         last_modified_min = entry_modified
-                                        r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(entry_modified_min))
+                                        r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(last_modified_min))
 
                                     if entry_modified > last_modified_max:
                                         last_modified_max = entry_modified
-                                        r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(entry_modified_max))
+                                        r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(last_modified_max))
 
                                     r.hset(RADARS_KEY, radar_id, response.json()['number'])
 
