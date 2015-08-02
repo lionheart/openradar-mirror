@@ -138,7 +138,7 @@ class Command(BaseCommand):
                                     else:
                                         label_value = entry[key]
 
-                                    label = u"{}:{}".format(key, value.lower())
+                                    label = u"{}:{}".format(key, label_value.lower())
                                     if should_add_given_labels(label, all_labels):
                                         labels.add(label)
                                         all_labels.add(label)
