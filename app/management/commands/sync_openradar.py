@@ -170,12 +170,15 @@ class Command(BaseCommand):
                                             r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(last_modified_max))
 
                                         r.hset(RADARS_KEY, radar_id, response.json()['number'])
+                                    elif response.status_code == 403:
+                                        break
                                     else:
                                         print response.json()
-
-                    params['page'] += 1
-                    print "next page"
-                    continue
+                    else:
+                        # If the loop completes normally, move to the next page
+                        params['page'] += 1
+                        print "next page"
+                        continue
 
             # We break if continue wasn't called
             break
