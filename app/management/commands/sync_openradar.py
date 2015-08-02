@@ -92,7 +92,12 @@ class Command(BaseCommand):
                         radar_id = entry['number']
 
                         entry['modified'] = entry_modified.isoformat()
-                        entry['originated'] = date_parser.parse(entry['originated']).isoformat()
+
+                        try:
+                            entry['originated'] = date_parser.parse(entry['originated']).isoformat()
+                        except ValueError:
+                            print entry
+                            raise
 
                         if not (last_modified_min <= entry_modified <= last_modified_max):
                             title = u"{number}: {title}".format(**entry)
