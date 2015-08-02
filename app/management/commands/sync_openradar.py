@@ -97,8 +97,7 @@ class Command(BaseCommand):
                         try:
                             entry['originated'] = date_parser.parse(entry['originated']).isoformat()
                         except ValueError:
-                            print entry
-                            raise
+                            print "Date in invalid format, skipping", entry['originated']
 
                         if not (last_modified_min <= entry_modified <= last_modified_max):
                             title = u"{number}: {title}".format(**entry)
