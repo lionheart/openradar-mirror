@@ -183,8 +183,10 @@ class Command(BaseCommand):
                                         r.hset(RADARS_KEY, radar_id, response.json()['number'])
 
                                         if int(response.headers['x-ratelimit-remaining']) == 0:
+                                            print "Rate limit exceeded. Backing off."
                                             break
                                     elif response.status_code == 403:
+                                        print "403 returned. Backing off."
                                         break
                                     else:
                                         print "Odd status code", radar_id
