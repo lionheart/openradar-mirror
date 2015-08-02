@@ -65,7 +65,9 @@ class Command(BaseCommand):
             last_modified_min = pickle.loads(last_modified_min_pickle)
 
         rate_limit_response = requests.get(GITHUB_API_ENDPOINT + "/rate_limit", headers=HEADERS)
-        if rate_limit_response.json()['rate']['remaining'] == 0:
+        rate_limit_response_json = rate_limit_response.json()
+        if rate_limit_response_json['rate']['remaining'] == 0:
+            print "Rate limit reached, waiting until", rate_limit_response_json['rate']['reset'], "to restart"
             return
 
         milestone_response = requests.get(milestone_url, headers=HEADERS)
