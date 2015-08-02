@@ -133,7 +133,12 @@ class Command(BaseCommand):
                             potential_label_keys = ['classification', 'reproducible', 'status']
                             for key in potential_label_keys:
                                 if key in entry and len(entry[key]) > 0:
-                                    label = u"{}:{}".format(key, entry[key].lower())
+                                    if "duplicate of" in entry[key] or "dup of" in entry[key] or "dupe of" in entry[key]:
+                                        label_value = "duplicate"
+                                    else:
+                                        label_value = entry[key]
+
+                                    label = u"{}:{}".format(key, value.lower())
                                     if should_add_given_labels(label, all_labels):
                                         labels.add(label)
                                         all_labels.add(label)
