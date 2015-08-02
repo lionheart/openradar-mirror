@@ -67,7 +67,9 @@ class Command(BaseCommand):
         rate_limit_response = requests.get(GITHUB_API_ENDPOINT + "/rate_limit", headers=HEADERS)
         rate_limit_response_json = rate_limit_response.json()
         if rate_limit_response_json['rate']['remaining'] == 0:
-            print "Rate limit reached, waiting until", rate_limit_response_json['rate']['reset'], "to restart"
+            reset_timestamp = rate_limit_response_json['rate']['reset']
+            reset_dt = datetime.datetime.fromtimestamp(reset_timestamp).isoformat()
+            print "Rate limit reached, waiting until", reset_dt, "to restart"
             return
 
         milestone_response = requests.get(milestone_url, headers=HEADERS)
