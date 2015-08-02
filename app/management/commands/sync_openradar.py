@@ -6,6 +6,7 @@ import pickle
 import datetime
 import json
 from redis import StrictRedis as Redis
+import httplib
 
 from dateutil import parser as date_parser
 
@@ -154,18 +155,22 @@ class Command(BaseCommand):
                                 print "updated", issue_id
                             else:
                                 # Add the Radar
-                                response = requests.post(issues_url, data=json.dumps(data), headers=HEADERS)
-                                if response.status_code == 201:
-                                    print u"Added {}".format(title)
-                                    if entry_modified < last_modified_min:
-                                        last_modified_min = entry_modified
-                                        r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(last_modified_min))
+                                try:
+                                    response = requests.post(issues_url, data=json.dumps(data), headers=HEADERS)
+                                except httplib.IncompleteRead:
+                                    print "Error reading response", radar_id
+                                else:
+                                    if response.status_code == 201:
+                                        print u"Added {}".format(title)
+                                        if entry_modified < last_modified_min:
+                                            last_modified_min = entry_modified
+                                            r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(last_modified_min))
 
-                                    if entry_modified > last_modified_max:
-                                        last_modified_max = entry_modified
-                                        r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(last_modified_max))
+                                        if entry_modified > last_modified_max:
+                                            last_modified_max = entry_modified
+                                            r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(last_modified_max))
 
-                                    r.hset(RADARS_KEY, radar_id, response.json()['number'])
+                                        r.hset(RADARS_KEY, radar_id, response.json()['number'])
 
                     params['page'] += 1
                     print "next page"
