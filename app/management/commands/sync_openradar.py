@@ -115,8 +115,7 @@ class Command(BaseCommand):
 
                             product = entry['product']
                             if product in all_milestones:
-                                milestone = int(all_milestones[product])
-                                data['milestone'] = milestone
+                                data['milestone'] = int(all_milestones[product])
                             else:
                                 milestone_data = {
                                     'title': product
@@ -165,6 +164,9 @@ class Command(BaseCommand):
                                 print "updated", issue_id
                             else:
                                 # Add the Radar
+
+                                print data
+
                                 try:
                                     response = requests.post(issues_url, data=json.dumps(data), headers=HEADERS)
                                 except httplib.IncompleteRead:
