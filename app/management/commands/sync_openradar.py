@@ -170,6 +170,8 @@ class Command(BaseCommand):
                                             r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(last_modified_max))
 
                                         r.hset(RADARS_KEY, radar_id, response.json()['number'])
+                                    else:
+                                        print response.json()
 
                     params['page'] += 1
                     print "next page"
