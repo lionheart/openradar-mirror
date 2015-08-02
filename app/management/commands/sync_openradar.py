@@ -171,7 +171,7 @@ class Command(BaseCommand):
 
                                         r.hset(RADARS_KEY, radar_id, response.json()['number'])
                                     elif response.status_code == 403:
-                                        break
+                                        print response.headers()
                                     else:
                                         print response.json()
                     else:
