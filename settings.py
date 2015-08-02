@@ -225,12 +225,15 @@ settings_path = lambda env: os.path.join(BASE, 'conf', 'settings', '{}.py'.forma
 GITHUB_API_KEY = os.environ.get("GITHUB_API_KEY")
 
 try:
-    config = imp.load_source('local_settings', settings_path(os.environ['APP_ENVIRONMENT']))
     from local_settings import *
-except KeyError:
-    raise Exception("""Please set your app environment (APP_ENVIRONMENT).""")
 except ImportError:
-    raise Exception("""Please set your app environment (APP_ENVIRONMENT).""")
+    try:
+        environment = os.environ['APP_ENVIRONMENT']
+    except KeyError:
+        raise Exception("""Please set your app environment (APP_ENVIRONMENT).""")
+    else:
+        config = imp.load_source('local_settings', settings_path(environment))
+        from local_settings import *
 
 # Uncomment if using django-celery
 # try:
