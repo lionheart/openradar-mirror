@@ -64,6 +64,10 @@ class Command(BaseCommand):
         else:
             last_modified_min = pickle.loads(last_modified_min_pickle)
 
+        rate_limit_response = requests.get(GITHUB_API_ENDPOINT + "/rate_limit", headers=HEADERS)
+        if rate_limit_response.json()['rate']['remaining'] == 0:
+            return
+
         milestone_response = requests.get(milestone_url, headers=HEADERS)
         all_milestones = {}
         for milestone_entry in milestone_response.json():
@@ -170,10 +174,13 @@ class Command(BaseCommand):
                                             r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(last_modified_max))
 
                                         r.hset(RADARS_KEY, radar_id, response.json()['number'])
+
+                                        if int(response.headers['x-ratelimit-remaining']) == 0:
+                                            break
                                     elif response.status_code == 403:
-                                        print response.headers()
+                                        break
                                     else:
-                                        print response.json()
+                                        print "Odd status code", radar_id
                     else:
                         # If the loop completes normally, move to the next page
                         params['page'] += 1
