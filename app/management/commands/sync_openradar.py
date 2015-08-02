@@ -94,7 +94,7 @@ class Command(BaseCommand):
                         entry['modified'] = entry_modified.isoformat()
                         entry['originated'] = date_parser.parse(entry['originated']).isoformat()
 
-                        if not (last_modified_min < entry_modified < last_modified_max):
+                        if not (last_modified_min <= entry_modified <= last_modified_max):
                             title = u"{number}: {title}".format(**entry)
                             description = u"#### Description\n\n{description}\n\n-\nProduct Version: {product_version}\nCreated: {created}\nOriginated: {originated}\nOpen Radar Link: http://www.openradar.me/{number}".format(**entry)
                             data = {
