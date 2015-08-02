@@ -47,14 +47,21 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         r = Redis()
 
-        LAST_MODIFIED_KEY = "last_modified"
+        LAST_MODIFIED_MAX_KEY = "last_modified_max"
+        LAST_MODIFIED_MIN_KEY = "last_modified_min"
         RADARS_KEY = "radars"
 
-        last_modified_pickle = r.get(LAST_MODIFIED_KEY)
-        if last_modified_pickle is None:
-            last_modified = datetime.datetime.now() - datetime.timedelta(weeks=52*30)
+        last_modified_max_pickle = r.get(LAST_MODIFIED_MAX_KEY)
+        if last_modified_max_pickle is None:
+            last_modified_max = datetime.datetime.now() - datetime.timedelta(weeks=52*30)
         else:
-            last_modified = pickle.loads(last_modified_pickle)
+            last_modified_max = pickle.loads(last_modified_max_pickle)
+
+        last_modified_min_pickle = r.get(LAST_MODIFIED_MIN_KEY)
+        if last_modified_min_pickle is None:
+            last_modified_min = datetime.datetime.now()
+        else:
+            last_modified_min = pickle.loads(last_modified_min_pickle)
 
         milestone_response = requests.get(milestone_url, headers=HEADERS)
         all_milestones = {}
@@ -81,64 +88,79 @@ class Command(BaseCommand):
                     result = openradar_json['result']
 
                     for entry in result:
-                        dt = date_parser.parse(entry['modified'])
+                        entry_modified = date_parser.parse(entry['modified'])
                         radar_id = entry['number']
-                        if dt > last_modified:
+
+                        entry['modified'] = entry_modified.isoformat()
+                        entry['originated'] = date_parser.parse(entry['originated']).isoformat()
+
+                        if not (last_modified_min < entry_modified < last_modified_max):
+                            title = u"{number}: {title}".format(**entry)
+                            description = u"#### Description\n\n{description}\n\n-\nProduct Version: {product_version}\nCreated: {created}\nOriginated: {originated}\nOpen Radar Link: http://www.openradar.me/{number}".format(**entry)
+                            data = {
+                                'title': title,
+                                'body': description,
+                            }
+
+                            product = entry['product']
+                            if product in all_milestones:
+                                milestone = int(all_milestones[product])
+                                data['milestone'] = milestone
+                            else:
+                                milestone_data = {
+                                    'title': product
+                                }
+                                milestone_response = requests.post(milestone_url, data=json.dumps(milestone_data), headers=HEADERS)
+                                if milestone_response.status_code == 200:
+                                    milestone_id = milestone_response.json()['number']
+                                    all_milestones[product] = milestone_id
+                                    data['milestone'] = milestone_id
+
+                            labels = set()
+                            potential_label_keys = ['classification', 'reproducible', 'status']
+                            for key in potential_label_keys:
+                                if key in entry and len(entry[key]) > 0:
+                                    label = "{}:{}".format(key, entry[key].lower())
+                                    if should_add_given_labels(label, all_labels):
+                                        labels.add(label)
+                                        all_labels.add(label)
+
+                            data['labels'] = list(labels)
+
                             if r.hexists(RADARS_KEY, radar_id):
                                 # Update the Radar
                                 issue_id = r.hget(RADARS_KEY, radar_id)
 
-                                if len(entry['resolved']) > 0:
-                                    issue_data = {
-                                        'state': "closed"
-                                    }
-                                    issue_url = issues_url + "/" issue_id
-                                    comment_url = issues_url + "/" issue_id + "/comments"
-                                    requests.patch(issue_url, data=json.dumps(issue_data), headers=HEADERS)
+                                if 'resolved' in entry and len(entry['resolved']) > 0:
+                                    data['state'] = 'closed'
+                                    comment_body = "Resolved: {resolved}\nModified: {modified}".format(**entry)
+                                else:
+                                    print entry
+                                    comment_body = "Modified: {modified}".format(**entry)
 
-                                    comment_body = "Resolved: {resolved}"
-                                    comment_data = {
-                                        'body': comment_body
-                                    }
-                                    requests.post(comment_url, json.dumps(comment_data), headers=HEADERS)
+                                issue_url = issues_url + "/" + issue_id
+                                comment_url = issues_url + "/" + issue_id + "/comments"
+                                requests.patch(issue_url, data=json.dumps(data), headers=HEADERS)
+
+                                comment_data = {
+                                    'body': comment_body
+                                }
+                                requests.post(comment_url, json.dumps(comment_data), headers=HEADERS)
+                                print "updated", issue_id
                             else:
                                 # Add the Radar
-                                title = u"{number}: {title}".format(**entry)
-                                description = u"{description}\n\nProduct Version: {product_version}\n\nCreated: {created}\n\nOriginated: {originated}\n\nOpen Radar Link: http://www.openradar.me/{number}".format(**entry)
-                                data = {
-                                    'title': title,
-                                    'body': description,
-                                }
-
-                                product = entry['product']
-                                if product in all_milestones:
-                                    milestone = int(all_milestones[product])
-                                    data['milestone'] = milestone
-                                else:
-                                    milestone_data = {
-                                        'title': product
-                                    }
-                                    milestone_response = requests.post(milestone_url, data=json.dumps(milestone_data), headers=HEADERS)
-                                    if milestone_response.status_code == 200:
-                                        milestone_id = milestone_response.json()['number']
-                                        all_milestones[product] = milestone_id
-                                        data['milestone'] = milestone_id
-
-                                labels = set()
-                                potential_label_keys = ['classification', 'reproducible', 'status']
-                                for key in potential_label_keys:
-                                    if key in entry and len(entry[key]) > 0:
-                                        label = "{}:{}".format(key, entry[key].lower())
-                                        if should_add_given_labels(label, all_labels):
-                                            labels.add(label)
-                                            all_labels.add(label)
-
-                                data['labels'] = list(labels)
                                 response = requests.post(issues_url, data=json.dumps(data), headers=HEADERS)
                                 if response.status_code == 201:
                                     print u"Added {}".format(title)
-                                    r.set(LAST_MODIFIED_KEY, pickle.dumps(dt))
-                                    r.hset(RADARS_KEY, radar_id, 1)
+                                    if entry_modified < last_modified_min:
+                                        last_modified_min = entry_modified
+                                        r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(entry_modified_min))
+
+                                    if entry_modified > last_modified_max:
+                                        last_modified_max = entry_modified
+                                        r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(entry_modified_max))
+
+                                    r.hset(RADARS_KEY, radar_id, response.json()['number'])
 
                     params['page'] += 1
                     print "next page"
