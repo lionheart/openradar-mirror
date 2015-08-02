@@ -83,10 +83,8 @@ class Command(BaseCommand):
             all_labels.add(label_entry['name'])
 
         page = 1
-        count = 500
         params = {
             'page': page,
-            'count': count
         }
 
         while True:
