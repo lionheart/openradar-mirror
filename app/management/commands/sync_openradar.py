@@ -45,7 +45,7 @@ def should_add_given_labels(label_name, labels):
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        r = Redis()
+        r = redis.from_url(os.environ.get("REDIS_URL"))
 
         LAST_MODIFIED_MAX_KEY = "last_modified_max"
         LAST_MODIFIED_MIN_KEY = "last_modified_min"
