@@ -125,7 +125,7 @@ class Command(BaseCommand):
                             potential_label_keys = ['classification', 'reproducible', 'status']
                             for key in potential_label_keys:
                                 if key in entry and len(entry[key]) > 0:
-                                    label = "{}:{}".format(key, entry[key].lower())
+                                    label = u"{}:{}".format(key, entry[key].lower())
                                     if should_add_given_labels(label, all_labels):
                                         labels.add(label)
                                         all_labels.add(label)
