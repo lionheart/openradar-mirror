@@ -121,7 +121,7 @@ class Command(BaseCommand):
                                     'title': product
                                 }
                                 milestone_response = requests.post(milestone_url, data=json.dumps(milestone_data), headers=HEADERS)
-                                if milestone_response.status_code == 200:
+                                if milestone_response.status_code == 201:
                                     milestone_id = milestone_response.json()['number']
                                     all_milestones[product] = milestone_id
                                     data['milestone'] = milestone_id
@@ -150,7 +150,6 @@ class Command(BaseCommand):
                                     data['state'] = 'closed'
                                     comment_body = "Resolved: {resolved}\nModified: {modified}".format(**entry)
                                 else:
-                                    print entry
                                     comment_body = "Modified: {modified}".format(**entry)
 
                                 issue_url = issues_url + "/" + issue_id
