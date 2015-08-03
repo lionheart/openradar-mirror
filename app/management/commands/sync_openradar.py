@@ -155,6 +155,9 @@ class Command(BaseCommand):
                                     milestone_id = milestone_response.json()['number']
                                     all_milestones[product] = milestone_id
                                     data['milestone'] = milestone_id
+                                else:
+                                    print "Milestone not created"
+                                    print milestone_response.json()
 
                             labels = set()
                             potential_label_keys = ['classification', 'reproducible', 'status']
