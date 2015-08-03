@@ -36,3 +36,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = '/tmp/app-messages'
 
 BASE_URL = "http://local.openradarmirror.com"
+
+REDIS_URL = "http://localhost:6379/"

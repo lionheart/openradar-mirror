@@ -25,3 +25,5 @@ DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 STATICFILES_STORAGE = 'statictastic.backends.VersionedFileSystemStorage'
 
 BASE_URL = "https://openradarmirror.herokuapp.com"
+
+REDIS_URL = os.environ.get("REDIS_URL")
