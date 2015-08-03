@@ -63,6 +63,7 @@ class Command(BaseCommand):
         LAST_MODIFIED_MAX_KEY = "last_modified_max"
         LAST_MODIFIED_MIN_KEY = "last_modified_min"
         RADARS_KEY = "radars"
+        PAGES_TO_SKIP_KEY = "pages_to_skip"
 
         last_modified_max_pickle = r.get(LAST_MODIFIED_MAX_KEY)
         if last_modified_max_pickle is None:
@@ -127,8 +128,20 @@ class Command(BaseCommand):
             'page': page,
         }
 
+        # If no radars were added, skip PAGES_TO_SKIP - 1
+        # If already skipped, and no radars were added, don't skip and add 1 to PAGES_TO_SKIP
+
+        if r.exists(PAGES_TO_SKIP_KEY):
+            pages_to_skip = r.get(PAGES_TO_SKIP_KEY)
+        else:
+            pages_to_skip = 0
+
+        pages_skipped = False
+
         while True:
             openradar_response = requests.get(OPENRADAR_API_ENDPOINT, params=params)
+            radars_added = False
+
             if openradar_response.status_code == 200:
                 openradar_json = openradar_response.json()
                 if 'result' in openradar_json and len(openradar_json['result']) > 0:
@@ -222,6 +235,8 @@ class Command(BaseCommand):
                                     print "Error reading response", radar_id
                                 else:
                                     if response.status_code == 201:
+                                        radars_added = True
+
                                         if entry_modified < last_modified_min:
                                             last_modified_min = entry_modified
                                             r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(last_modified_min))
@@ -247,11 +262,26 @@ class Command(BaseCommand):
                                         print "Odd status code", radar_id
                     else:
                         # If the loop completes normally, move to the next page
-                        params['page'] += 1
-                        print "next page"
+                        if radars_added:
+                            params['page'] += 1
+                            print "next page"
+                        else:
+                            if pages_skipped:
+                                pages_to_skip += 1
+                                params['page'] += 1
+                                print "next page, adding 1 to pages_to_skip"
+                            else:
+                                pages_skipped = True
+                                params['page'] += pages_to_skip
+                                print "no radars added, skipping", pages_to_skip, "pages ahead"
+
                         continue
+                else:
+                    break
 
             # We break if continue wasn't called
             break
+
+        r.set(PAGES_TO_SKIP_KEY, pages_to_skip)
 
 
