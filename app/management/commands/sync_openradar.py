@@ -145,6 +145,11 @@ class Command(BaseCommand):
                         except ValueError:
                             print "Date in invalid format, skipping", entry['originated']
 
+                        try:
+                            entry['created'] = date_parser.parse(entry['created']).isoformat()
+                        except ValueError:
+                            print "Date in invalid format, skipping", entry['created']
+
                         if not (last_modified_min <= entry_modified <= last_modified_max):
                             title = u"{number}: {title}".format(**entry)
                             description = u"#### Description\n\n{description}\n\n-\nProduct Version: {product_version}\nCreated: {created}\nOriginated: {originated}\nOpen Radar Link: http://www.openradar.me/{number}".format(**entry)
