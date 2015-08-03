@@ -80,10 +80,12 @@ class Command(BaseCommand):
             milestone_response = requests.get(milestone_paging_url, params={"state": "all"}, headers=HEADERS)
             milestone_pages = []
             milestone_paging_url = None
-            for link in milestone_response.headers['link'].split(', '):
-                url, rel = link.split("; ")
-                if rel == 'rel="next"':
-                    milestone_paging_url = url[1:-1]
+
+            if 'link' in milestone_response.headers:
+                for link in milestone_response.headers['link'].split(', '):
+                    url, rel = link.split("; ")
+                    if rel == 'rel="next"':
+                        milestone_paging_url = url[1:-1]
 
             for milestone_entry in milestone_response.json():
                 all_milestones[milestone_entry['title']] = milestone_entry['number']
@@ -97,10 +99,12 @@ class Command(BaseCommand):
             labels_response = requests.get(labels_paging_url, headers=HEADERS)
             labels_pages = []
             labels_paging_url = None
-            for link in labels_response.headers['link'].split(', '):
-                url, rel = link.split("; ")
-                if rel == 'rel="next"':
-                    labels_paging_url = url[1:-1]
+
+            if 'link' in labels_response.headers:
+                for link in labels_response.headers['link'].split(', '):
+                    url, rel = link.split("; ")
+                    if rel == 'rel="next"':
+                        labels_paging_url = url[1:-1]
 
             for labels_entry in labels_response.json():
                 all_labels.add(labels_entry['name'])
