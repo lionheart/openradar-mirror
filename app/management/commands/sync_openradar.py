@@ -42,6 +42,16 @@ def should_add_given_labels(label_name, labels):
             'name': label_name,
             'color': "444444"
         }
+
+        if "bug" in label_name:
+            label_data['color'] = "e11d21"
+
+        if "serious" in label_name:
+            label_data['color'] = "e11d21"
+
+        if "crash" in label_name:
+            label_data['color'] = "e11d21"
+
         response = requests.post(label_url, data=json.dumps(label_data), headers=HEADERS)
         return response.status_code == 201
 
