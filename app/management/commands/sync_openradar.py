@@ -199,8 +199,7 @@ class Command(BaseCommand):
                             else:
                                 # Add the Radar
                                 if 'milestone' not in data:
-                                    print "Break"
-                                    break
+                                    print "Skipping milestone"
 
                                 try:
                                     response = requests.post(issues_url, data=json.dumps(data), headers=HEADERS)
