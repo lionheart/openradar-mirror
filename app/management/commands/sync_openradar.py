@@ -132,7 +132,7 @@ class Command(BaseCommand):
         # If already skipped, and no radars were added, don't skip and add 1 to PAGES_TO_SKIP
 
         if r.exists(PAGES_TO_SKIP_KEY):
-            pages_to_skip = int(r.get(PAGES_TO_SKIP_KEY))
+            pages_to_skip = int(r.get(PAGES_TO_SKIP_KEY)) - 1
         else:
             pages_to_skip = 0
 
