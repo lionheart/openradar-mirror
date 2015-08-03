@@ -147,18 +147,19 @@ class Command(BaseCommand):
                             if product in all_milestones:
                                 data['milestone'] = int(all_milestones[product])
                             else:
-                                milestone_data = {
-                                    'title': product
-                                }
-                                milestone_response = requests.post(milestone_url, data=json.dumps(milestone_data), headers=HEADERS)
-                                if milestone_response.status_code == 201:
-                                    milestone_id = milestone_response.json()['number']
-                                    all_milestones[product] = milestone_id
-                                    data['milestone'] = milestone_id
-                                else:
-                                    print entry
-                                    print "Milestone not created"
-                                    print milestone_response.json()
+                                if len(product) > 0:
+                                    milestone_data = {
+                                        'title': product
+                                    }
+                                    milestone_response = requests.post(milestone_url, data=json.dumps(milestone_data), headers=HEADERS)
+                                    if milestone_response.status_code == 201:
+                                        milestone_id = milestone_response.json()['number']
+                                        all_milestones[product] = milestone_id
+                                        data['milestone'] = milestone_id
+                                    else:
+                                        print entry
+                                        print "Milestone not created"
+                                        print milestone_response.json()
 
                             labels = set()
                             potential_label_keys = ['classification', 'reproducible', 'status']
