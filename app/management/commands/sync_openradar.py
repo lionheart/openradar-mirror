@@ -149,7 +149,7 @@ class Command(BaseCommand):
                             else:
                                 if len(product) > 0:
                                     milestone_data = {
-                                        'title': product
+                                        'title': entry['product']
                                     }
                                     milestone_response = requests.post(milestone_url, data=json.dumps(milestone_data), headers=HEADERS)
                                     if milestone_response.status_code == 201:
