@@ -5,6 +5,8 @@ import requests
 import pickle
 import datetime
 import json
+import pprint
+
 from redis import StrictRedis as Redis
 import httplib
 
@@ -46,7 +48,7 @@ def should_add_given_labels(label_name, labels):
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        r = Redis.from_url(os.environ.get("REDIS_URL"))
+        r = Redis.from_url(settings.REDIS_URL)
 
         LAST_MODIFIED_MAX_KEY = "last_modified_max"
         LAST_MODIFIED_MIN_KEY = "last_modified_min"
@@ -72,15 +74,39 @@ class Command(BaseCommand):
             print "Rate limit reached, waiting until", reset_dt, "to restart"
             return
 
-        milestone_response = requests.get(milestone_url, headers=HEADERS)
         all_milestones = {}
-        for milestone_entry in milestone_response.json():
-            all_milestones[milestone_entry['title']] = milestone_entry['number']
+        milestone_paging_url = milestone_url
+        while True:
+            milestone_response = requests.get(milestone_paging_url, params={"state": "all"}, headers=HEADERS)
+            milestone_pages = []
+            milestone_paging_url = None
+            for link in milestone_response.headers['link'].split(', '):
+                url, rel = link.split("; ")
+                if rel == 'rel="next"':
+                    milestone_paging_url = url[1:-1]
 
-        label_response = requests.get(label_url, headers=HEADERS)
+            for milestone_entry in milestone_response.json():
+                all_milestones[milestone_entry['title']] = milestone_entry['number']
+
+            if milestone_paging_url is None:
+                break
+
         all_labels = set()
-        for label_entry in label_response.json():
-            all_labels.add(label_entry['name'])
+        labels_paging_url = label_url
+        while True:
+            labels_response = requests.get(labels_paging_url, headers=HEADERS)
+            labels_pages = []
+            labels_paging_url = None
+            for link in labels_response.headers['link'].split(', '):
+                url, rel = link.split("; ")
+                if rel == 'rel="next"':
+                    labels_paging_url = url[1:-1]
+
+            for labels_entry in labels_response.json():
+                all_labels.add(labels_entry['name'])
+
+            if labels_paging_url is None:
+                break
 
         page = 1
         params = {
@@ -163,8 +189,9 @@ class Command(BaseCommand):
                                 print "updated", issue_id
                             else:
                                 # Add the Radar
-
-                                print data
+                                if 'milestone' not in data:
+                                    print "Break"
+                                    break
 
                                 try:
                                     response = requests.post(issues_url, data=json.dumps(data), headers=HEADERS)
