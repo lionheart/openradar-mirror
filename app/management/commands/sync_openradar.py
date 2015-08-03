@@ -217,7 +217,10 @@ class Command(BaseCommand):
                                     print "Error reading response", radar_id
                                 else:
                                     if response.status_code == 201:
-                                        print u"Added {}".format(title)
+                                        try:
+                                            print u"Added {}".format(title)
+                                        except UnicodeEncodeError:
+                                            print title
                                         if entry_modified < last_modified_min:
                                             last_modified_min = entry_modified
                                             r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(last_modified_min))
