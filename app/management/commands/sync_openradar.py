@@ -198,7 +198,7 @@ class Command(BaseCommand):
                                 print "updated", issue_id
                             else:
                                 # Add the Radar
-                                if 'milestone' not in data:
+                                if 'milestone' not in data and len(entry['product']) > 0:
                                     print "Skipping milestone"
 
                                 try:
