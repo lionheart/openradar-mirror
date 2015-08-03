@@ -235,8 +235,6 @@ class Command(BaseCommand):
                                     print "Error reading response", radar_id
                                 else:
                                     if response.status_code == 201:
-                                        radars_added = True
-
                                         if entry_modified < last_modified_min:
                                             last_modified_min = entry_modified
                                             r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(last_modified_min))
@@ -250,7 +248,9 @@ class Command(BaseCommand):
                                         try:
                                             print u"Added {}".format(title)
                                         except UnicodeEncodeError:
-                                            print title
+                                            print "Error printing title for radar", radar_id
+
+                                        radars_added = True
 
                                         if int(response.headers['x-ratelimit-remaining']) == 0:
                                             print "Rate limit exceeded. Backing off."
