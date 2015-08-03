@@ -139,148 +139,154 @@ class Command(BaseCommand):
         pages_skipped = False
 
         while True:
-            openradar_response = requests.get(OPENRADAR_API_ENDPOINT, params=params)
-            radars_added = False
+            try:
+                openradar_response = requests.get(OPENRADAR_API_ENDPOINT, params=params)
+            except requests.exceptions.ConnectionError:
+                print "Oops. Connection error"
+                raise
+                break
+            else:
+                radars_added = False
 
-            if openradar_response.status_code == 200:
-                openradar_json = openradar_response.json()
-                if 'result' in openradar_json and len(openradar_json['result']) > 0:
-                    result = openradar_json['result']
+                if openradar_response.status_code == 200:
+                    openradar_json = openradar_response.json()
+                    if 'result' in openradar_json and len(openradar_json['result']) > 0:
+                        result = openradar_json['result']
 
-                    for entry in result:
-                        entry_modified = date_parser.parse(entry['modified'])
-                        radar_id = entry['number']
+                        for entry in result:
+                            entry_modified = date_parser.parse(entry['modified'])
+                            radar_id = entry['number']
 
-                        entry['modified'] = entry_modified.isoformat()
+                            entry['modified'] = entry_modified.isoformat()
 
-                        try:
-                            entry['originated'] = date_parser.parse(entry['originated']).isoformat()
-                        except ValueError:
-                            print "Date in invalid format, skipping", entry['originated']
+                            try:
+                                entry['originated'] = date_parser.parse(entry['originated']).isoformat()
+                            except ValueError:
+                                print "Date in invalid format, skipping", entry['originated']
 
-                        try:
-                            entry['created'] = date_parser.parse(entry['created']).isoformat()
-                        except ValueError:
-                            print "Date in invalid format, skipping", entry['created']
+                            try:
+                                entry['created'] = date_parser.parse(entry['created']).isoformat()
+                            except ValueError:
+                                print "Date in invalid format, skipping", entry['created']
 
-                        if not (last_modified_min <= entry_modified <= last_modified_max):
-                            title = u"{number}: {title}".format(**entry)
-                            description = u"#### Description\n\n{description}\n\n-\nProduct Version: {product_version}\nCreated: {created}\nOriginated: {originated}\nOpen Radar Link: http://www.openradar.me/{number}".format(**entry)
-                            data = {
-                                'title': title,
-                                'body': description,
-                            }
-
-                            product = entry['product'].lower()
-                            if product in all_milestones:
-                                data['milestone'] = int(all_milestones[product])
-                            else:
-                                if len(product) > 0:
-                                    milestone_data = {
-                                        'title': entry['product']
-                                    }
-                                    milestone_response = requests.post(milestone_url, data=json.dumps(milestone_data), headers=HEADERS)
-                                    if milestone_response.status_code == 201:
-                                        milestone_id = milestone_response.json()['number']
-                                        all_milestones[product] = milestone_id
-                                        data['milestone'] = milestone_id
-                                    else:
-                                        print entry
-                                        print "Milestone not created"
-                                        print milestone_response.json()
-
-                            labels = set()
-                            potential_label_keys = ['classification', 'reproducible', 'status']
-                            for key in potential_label_keys:
-                                if key in entry and len(entry[key]) > 0:
-                                    if "duplicate of" in entry[key] or "dup of" in entry[key] or "dupe of" in entry[key]:
-                                        label_value = "duplicate"
-                                    else:
-                                        label_value = entry[key]
-
-                                    label = u"{}:{}".format(key, label_value.lower())
-                                    if should_add_given_labels(label, all_labels):
-                                        labels.add(label)
-                                        all_labels.add(label)
-
-                            data['labels'] = list(labels)
-
-                            if r.hexists(RADARS_KEY, radar_id):
-                                # Update the Radar
-                                issue_id = r.hget(RADARS_KEY, radar_id)
-
-                                if 'resolved' in entry and len(entry['resolved']) > 0:
-                                    data['state'] = 'closed'
-                                    comment_body = "Resolved: {resolved}\nModified: {modified}".format(**entry)
-                                else:
-                                    comment_body = "Modified: {modified}".format(**entry)
-
-                                issue_url = issues_url + "/" + issue_id
-                                comment_url = issues_url + "/" + issue_id + "/comments"
-                                requests.patch(issue_url, data=json.dumps(data), headers=HEADERS)
-
-                                comment_data = {
-                                    'body': comment_body
+                            if not (last_modified_min <= entry_modified <= last_modified_max):
+                                title = u"{number}: {title}".format(**entry)
+                                description = u"#### Description\n\n{description}\n\n-\nProduct Version: {product_version}\nCreated: {created}\nOriginated: {originated}\nOpen Radar Link: http://www.openradar.me/{number}".format(**entry)
+                                data = {
+                                    'title': title,
+                                    'body': description,
                                 }
-                                requests.post(comment_url, json.dumps(comment_data), headers=HEADERS)
-                                print "updated", issue_id
-                            else:
-                                # Add the Radar
-                                if 'milestone' not in data and len(entry['product']) > 0:
-                                    print "Skipping milestone"
 
-                                try:
-                                    response = requests.post(issues_url, data=json.dumps(data), headers=HEADERS)
-                                except httplib.IncompleteRead:
-                                    print "Error reading response", radar_id
+                                product = entry['product'].lower()
+                                if product in all_milestones:
+                                    data['milestone'] = int(all_milestones[product])
                                 else:
-                                    if response.status_code == 201:
-                                        if entry_modified < last_modified_min:
-                                            last_modified_min = entry_modified
-                                            r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(last_modified_min))
+                                    if len(product) > 0:
+                                        milestone_data = {
+                                            'title': entry['product']
+                                        }
+                                        milestone_response = requests.post(milestone_url, data=json.dumps(milestone_data), headers=HEADERS)
+                                        if milestone_response.status_code == 201:
+                                            milestone_id = milestone_response.json()['number']
+                                            all_milestones[product] = milestone_id
+                                            data['milestone'] = milestone_id
+                                        else:
+                                            print entry
+                                            print "Milestone not created"
+                                            print milestone_response.json()
 
-                                        if entry_modified > last_modified_max:
-                                            last_modified_max = entry_modified
-                                            r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(last_modified_max))
+                                labels = set()
+                                potential_label_keys = ['classification', 'reproducible', 'status']
+                                for key in potential_label_keys:
+                                    if key in entry and len(entry[key]) > 0:
+                                        if "duplicate of" in entry[key] or "dup of" in entry[key] or "dupe of" in entry[key]:
+                                            label_value = "duplicate"
+                                        else:
+                                            label_value = entry[key]
 
-                                        r.hset(RADARS_KEY, radar_id, response.json()['number'])
+                                        label = u"{}:{}".format(key, label_value.lower())
+                                        if should_add_given_labels(label, all_labels):
+                                            labels.add(label)
+                                            all_labels.add(label)
 
-                                        try:
-                                            print u"Added {}".format(title)
-                                        except UnicodeEncodeError:
-                                            print "Error printing title for radar", radar_id
+                                data['labels'] = list(labels)
 
-                                        radars_added = True
+                                if r.hexists(RADARS_KEY, radar_id):
+                                    # Update the Radar
+                                    issue_id = r.hget(RADARS_KEY, radar_id)
 
-                                        if int(response.headers['x-ratelimit-remaining']) == 0:
-                                            print "Rate limit exceeded. Backing off."
-                                            break
-                                    elif response.status_code == 403:
-                                        print "403 returned. Backing off."
-                                        break
+                                    if 'resolved' in entry and len(entry['resolved']) > 0:
+                                        data['state'] = 'closed'
+                                        comment_body = "Resolved: {resolved}\nModified: {modified}".format(**entry)
                                     else:
-                                        print "Odd status code", radar_id
-                    else:
-                        # If the loop completes normally, move to the next page
-                        if radars_added:
-                            params['page'] += 1
-                            print "next page"
+                                        comment_body = "Modified: {modified}".format(**entry)
+
+                                    issue_url = issues_url + "/" + issue_id
+                                    comment_url = issues_url + "/" + issue_id + "/comments"
+                                    requests.patch(issue_url, data=json.dumps(data), headers=HEADERS)
+
+                                    comment_data = {
+                                        'body': comment_body
+                                    }
+                                    requests.post(comment_url, json.dumps(comment_data), headers=HEADERS)
+                                    print "updated", issue_id
+                                else:
+                                    # Add the Radar
+                                    if 'milestone' not in data and len(entry['product']) > 0:
+                                        print "Skipping milestone"
+
+                                    try:
+                                        response = requests.post(issues_url, data=json.dumps(data), headers=HEADERS)
+                                    except httplib.IncompleteRead:
+                                        print "Error reading response", radar_id
+                                    else:
+                                        if response.status_code == 201:
+                                            if entry_modified < last_modified_min:
+                                                last_modified_min = entry_modified
+                                                r.set(LAST_MODIFIED_MIN_KEY, pickle.dumps(last_modified_min))
+
+                                            if entry_modified > last_modified_max:
+                                                last_modified_max = entry_modified
+                                                r.set(LAST_MODIFIED_MAX_KEY, pickle.dumps(last_modified_max))
+
+                                            r.hset(RADARS_KEY, radar_id, response.json()['number'])
+
+                                            try:
+                                                print u"Added {}".format(title)
+                                            except UnicodeEncodeError:
+                                                print "Error printing title for radar", radar_id
+
+                                            radars_added = True
+
+                                            if int(response.headers['x-ratelimit-remaining']) == 0:
+                                                print "Rate limit exceeded. Backing off."
+                                                break
+                                        elif response.status_code == 403:
+                                            print "403 returned. Backing off."
+                                            break
+                                        else:
+                                            print "Odd status code", radar_id
                         else:
-                            if pages_skipped:
-                                pages_to_skip += 1
+                            # If the loop completes normally, move to the next page
+                            if radars_added:
                                 params['page'] += 1
-                                print "next page, adding 1 to pages_to_skip"
+                                print "next page"
                             else:
-                                pages_skipped = True
-                                params['page'] += pages_to_skip
-                                print "no radars added, skipping", pages_to_skip, "pages ahead"
+                                if pages_skipped:
+                                    pages_to_skip += 1
+                                    params['page'] += 1
+                                    print "next page, adding 1 to pages_to_skip"
+                                else:
+                                    pages_skipped = True
+                                    params['page'] += pages_to_skip
+                                    print "no radars added, skipping", pages_to_skip, "pages ahead"
 
-                        continue
-                else:
-                    break
+                            continue
+                    else:
+                        break
 
-            # We break if continue wasn't called
-            break
+                # We break if continue wasn't called
+                break
 
         r.set(PAGES_TO_SKIP_KEY, pages_to_skip)
 
