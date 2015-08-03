@@ -88,7 +88,7 @@ class Command(BaseCommand):
                         milestone_paging_url = url[1:-1]
 
             for milestone_entry in milestone_response.json():
-                all_milestones[milestone_entry['title']] = milestone_entry['number']
+                all_milestones[milestone_entry['title'].lower()] = milestone_entry['number']
 
             if milestone_paging_url is None:
                 break
@@ -143,7 +143,7 @@ class Command(BaseCommand):
                                 'body': description,
                             }
 
-                            product = entry['product']
+                            product = entry['product'].lower()
                             if product in all_milestones:
                                 data['milestone'] = int(all_milestones[product])
                             else:
@@ -156,6 +156,7 @@ class Command(BaseCommand):
                                     all_milestones[product] = milestone_id
                                     data['milestone'] = milestone_id
                                 else:
+                                    print entry
                                     print "Milestone not created"
                                     print milestone_response.json()
 
