@@ -15,6 +15,9 @@ from dateutil import parser as date_parser
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
+GITHUB_API_KEY = os.environ.get("GITHUB_API_KEY")
+REDIS_URL = os.environ.get("REDIS_URL")
+
 logger = logging.getLogger(__name__)
 
 GITHUB_API_ENDPOINT = "https://api.github.com"

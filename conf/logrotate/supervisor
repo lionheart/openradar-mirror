@@ -1,9 +1,0 @@
-/var/log/supervisord.log {
-    create 644 root root
-    olddir /var/log/rotated
-    sharedscripts
-    postrotate
-       /usr/bin/killall -USR2 supervisord
-    endscript
-}
-
