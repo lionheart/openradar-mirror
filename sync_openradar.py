@@ -19,7 +19,7 @@ REDIS_URL = os.environ.get("REDIS_URL")
 logger = logging.getLogger(__name__)
 
 GITHUB_API_ENDPOINT = "https://api.github.com"
-OPENRADAR_API_ENDPOINT = "http://openradar.me/api/radars"
+OPENRADAR_API_ENDPOINT = "https://openradar.appspot.com/api/radars"
 
 github_url = lambda *components: "{}/{}".format(GITHUB_API_ENDPOINT, "/".join(components))
 HEADERS = {
