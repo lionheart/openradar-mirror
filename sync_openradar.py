@@ -1,3 +1,4 @@
+import sys
 import optparse
 import logging
 import os
@@ -80,7 +81,7 @@ if rate_limit_response_json['rate']['remaining'] == 0:
     reset_timestamp = rate_limit_response_json['rate']['reset']
     reset_dt = datetime.datetime.fromtimestamp(reset_timestamp).isoformat()
     print "Rate limit reached, waiting until", reset_dt, "to restart"
-    return
+    sys.exit(0)
 
 all_milestones = {}
 milestone_paging_url = milestone_url
