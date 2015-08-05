@@ -56,7 +56,10 @@ def should_add_given_labels(label_name, labels):
         response = requests.post(label_url, data=json.dumps(label_data), headers=HEADERS)
         return response.status_code == 201
 
-r = Redis.from_url(REDIS_URL)
+if REDIS_URL is None:
+    r = Redis()
+else:
+    r = Redis.from_url(REDIS_URL)
 
 LAST_MODIFIED_MAX_KEY = "last_modified_max"
 LAST_MODIFIED_MIN_KEY = "last_modified_min"
@@ -138,10 +141,10 @@ pages_skipped = False
 
 while True:
     try:
+        print params, OPENRADAR_API_ENDPOINT
         openradar_response = requests.get(OPENRADAR_API_ENDPOINT, params=params)
     except requests.exceptions.ConnectionError:
         print "Oops. Connection error"
-        raise
         break
     else:
         radars_added = False
