@@ -168,7 +168,10 @@ while True:
                     try:
                         entry['created'] = date_parser.parse(entry['created']).isoformat()
                     except ValueError:
-                        print "Date in invalid format, skipping", entry['created']
+                        try:
+                            print "Date in invalid format, skipping", entry['created']
+                        except UnicodeEncodeError:
+                            print "Couldn't print invalid date:", radar_id
 
                     if not (last_modified_min <= entry_modified <= last_modified_max):
                         title = u"{number}: {title}".format(**entry)
