@@ -163,7 +163,11 @@ while True:
                     try:
                         entry['originated'] = date_parser.parse(entry['originated']).isoformat()
                     except ValueError:
-                        print "Date in invalid format, skipping", entry['originated']
+                        try:
+                            print "Date in invalid format, skipping", entry['created']
+                        except UnicodeEncodeError:
+                            print "Couldn't print invalid date:", radar_id
+
 
                     try:
                         entry['created'] = date_parser.parse(entry['created']).isoformat()
