@@ -7,11 +7,14 @@ import pickle
 import datetime
 import json
 import pprint
+import re
 
 from redis import StrictRedis as Redis
 import httplib
 
 from dateutil import parser as date_parser
+
+duplicate_re = re.compile("(duplicate of|dupe? of|duplicate/) ?(\d+)")
 
 GITHUB_API_KEY = os.environ.get("GITHUB_API_KEY")
 OPENRADAR_API_KEY = os.environ.get("OPENRADAR_API_KEY")
@@ -211,12 +214,16 @@ while True:
 
                         labels = set()
                         potential_label_keys = ['classification', 'reproducible', 'status']
+                        duplicated_issue = None
                         for key in potential_label_keys:
                             if key in entry and len(entry[key]) > 0:
-                                if "duplicate of" in entry[key] or "dup of" in entry[key] or "dupe of" in entry[key]:
-                                    label_value = "duplicate"
-                                else:
+                                match = duplicate_re.match(entry[key])
+                                if match is None:
                                     label_value = entry[key]
+                                else:
+                                    label_value = "duplicate"
+
+                                    duplicated_issue = match.group(2)
 
                                 label = u"{}:{}".format(key, label_value.lower())
                                 if should_add_given_labels(label, all_labels):
@@ -234,6 +241,11 @@ while True:
                                 comment_body = "Resolved: {resolved}\nModified: {modified}".format(**entry)
                             else:
                                 comment_body = "Modified: {modified}".format(**entry)
+
+                            if duplicated_issue:
+                                duplicated_issue_id = r.hget(RADARS_KEY, duplicated_issue)
+                                comment_body += "\nDuplicate of {} (#{})".format(duplicated_issue, duplicated_issue_id)
+                                print "issue is a duplicate", issue_id
 
                             issue_url = issues_url + "/" + issue_id
                             comment_url = issues_url + "/" + issue_id + "/comments"
@@ -280,6 +292,8 @@ while True:
                                     break
                                 else:
                                     print "Odd status code", radar_id
+                    else:
+                        print "not found within acceptable date range"
                 else:
                     # If the loop completes normally, move to the next page
                     if radars_added:
