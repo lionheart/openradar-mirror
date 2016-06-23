@@ -175,7 +175,6 @@ while True:
                         except UnicodeEncodeError:
                             print "Couldn't print invalid date:", radar_id
 
-
                     try:
                         entry['created'] = date_parser.parse(entry['created']).isoformat()
                     except ValueError:
@@ -298,7 +297,7 @@ while True:
 
                     continue
             else:
-                break
+                print "no json object could be found"
 
         # We break if continue wasn't called
         break
