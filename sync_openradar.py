@@ -139,6 +139,8 @@ params = {
 
 if r.exists(PAGES_TO_SKIP_KEY):
     pages_to_skip = int(r.get(PAGES_TO_SKIP_KEY)) - 1
+    if pages_to_skip < 0:
+        pages_to_skip = 0
 else:
     pages_to_skip = 0
 
