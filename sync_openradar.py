@@ -14,6 +14,7 @@ import httplib
 from dateutil import parser as date_parser
 
 GITHUB_API_KEY = os.environ.get("GITHUB_API_KEY")
+OPENRADAR_API_KEY = os.environ.get("OPENRADAR_API_KEY")
 REDIS_URL = os.environ.get("REDIS_URL")
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,10 @@ HEADERS = {
     'Authorization': "token {}".format(GITHUB_API_KEY),
     'Content-Type': "application/json",
     'Accept': "application/json"
+}
+
+OPENRADAR_HEADERS = {
+    'Authorization': OPENRADAR_API_KEY
 }
 
 label_url = github_url("repos", "lionheart", "openradar-mirror", "labels")
@@ -142,7 +147,7 @@ pages_skipped = False
 while True:
     try:
         print params, OPENRADAR_API_ENDPOINT
-        openradar_response = requests.get(OPENRADAR_API_ENDPOINT, params=params)
+        openradar_response = requests.get(OPENRADAR_API_ENDPOINT, params=params, headers=OPENRADAR_HEADERS)
     except requests.exceptions.ConnectionError:
         print "Oops. Connection error"
         break
